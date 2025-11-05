@@ -1,4 +1,4 @@
-# Solana Pay-Per-Article Marketplace (Multi-Agent Repo)
+# Solana Pay-Per-Article Marketplace 
 
 This repository scaffolds a decentralized pay-per-article/content platform on Solana (Rust + Anchor).
 Readers buy single articles/posts. Creators upload encrypted content (Arweave/IPFS). Access is unlocked
