@@ -1,0 +1,15 @@
+[programs.localnet]
+paywall = "3psatBaDW49GpyZTcwcQENW6MUK8rQ6NFmJy9EE1NrvH"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn ts-mocha -p ./ts/tsconfig.json -t 1000000 ts/tests/**/*.spec.ts"
+
+
+
