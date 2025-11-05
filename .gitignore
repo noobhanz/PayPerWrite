@@ -1,3 +1,6 @@
+# CRITICAL: Internal development workflow - NEVER commit to public repos
+.internal/
+
 # Build artifacts
 /target/
 **/*.rs.bk
