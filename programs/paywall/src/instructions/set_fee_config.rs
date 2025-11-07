@@ -5,7 +5,7 @@ use crate::errors::PaywallError;
 
 #[derive(Accounts)]
 pub struct SetFeeConfig<'info> {
-    #[account(mut, address = admin::ID)]
+    #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
         init_if_needed,

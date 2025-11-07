@@ -1,5 +1,9 @@
 # CRITICAL: Internal development workflow - NEVER commit to public repos
 .internal/
+solana-pay-per-article-public/
+specs/
+agents/
+prompts/
 
 # Build artifacts
 /target/
