@@ -25,31 +25,20 @@ export function ArticleList() {
     async function loadArticles() {
       setLoading(true);
 
-      // TODO: Fetch actual articles from program accounts
-      // For now, using mock data for UI development
-      const mockArticles: Article[] = [
-        {
-          address: 'Article1111111111111111111111111111111111',
-          creator: 'Creator111111111111111111111111111111111',
-          uriEncrypted: 'lit-protocol://encrypted-content-hash-1',
-          price: 1000000, // 0.001 SOL (in lamports)
-          mint: 'So11111111111111111111111111111111111111112', // Native SOL
-          royaltyBps: 1000, // 10%
-          isPurchased: false,
-        },
-        {
-          address: 'Article2222222222222222222222222222222222',
-          creator: 'Creator222222222222222222222222222222222',
-          uriEncrypted: 'lit-protocol://encrypted-content-hash-2',
-          price: 2000000, // 0.002 SOL
-          mint: 'So11111111111111111111111111111111111111112',
-          royaltyBps: 500, // 5%
-          isPurchased: false,
-        },
-      ];
+      try {
+        const response = await fetch('/api/articles');
+        const data = await response.json();
 
-      setArticles(mockArticles);
-      setLoading(false);
+        setArticles(data.articles.map((article: any) => ({
+          ...article,
+          isPurchased: false, // TODO: Check on-chain if user has purchased
+        })));
+      } catch (error) {
+        console.error('Error loading articles:', error);
+        setArticles([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
     if (publicKey) {

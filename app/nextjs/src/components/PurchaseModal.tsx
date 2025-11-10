@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useConnection, useWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
-import { AnchorProvider } from '@coral-xyz/anchor';
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { getSDK } from '@/lib/solana';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, LAMPORTS_PER_SOL, Transaction, VersionedTransaction } from '@solana/web3.js';
 
 interface PurchaseModalProps {
   article: {
@@ -21,14 +19,13 @@ interface PurchaseModalProps {
 
 export function PurchaseModal({ article, onClose, onSuccess }: PurchaseModalProps) {
   const { connection } = useConnection();
-  const { publicKey } = useWallet();
-  const anchorWallet = useAnchorWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const [referrerAddress, setReferrerAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handlePurchase = async () => {
-    if (!publicKey || !anchorWallet) {
+    if (!publicKey) {
       setError('Wallet not connected');
       return;
     }
@@ -37,50 +34,37 @@ export function PurchaseModal({ article, onClose, onSuccess }: PurchaseModalProp
     setError(null);
 
     try {
-      const provider = new AnchorProvider(
-        connection,
-        anchorWallet,
-        { commitment: 'confirmed' }
-      );
+      // Call API to build the transaction
+      const response = await fetch('/api/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buyer: publicKey.toString(),
+          articleAddress: article.address,
+          referrer: referrerAddress.trim() || undefined,
+        }),
+      });
 
-      const sdk = getSDK(provider);
-      const articlePubkey = new PublicKey(article.address);
-
-      // Parse referrer if provided
-      let referrer: PublicKey | undefined;
-      if (referrerAddress.trim()) {
-        try {
-          referrer = new PublicKey(referrerAddress.trim());
-        } catch {
-          setError('Invalid referrer address');
-          setLoading(false);
-          return;
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to build transaction');
       }
 
-      // Mock article data for testing
-      // In production, fetch this from the blockchain
-      const articleData = {
-        creator: new PublicKey(article.creator),
-        articleSeq: { toNumber: () => 1 },
-        uriEncrypted: article.uriEncrypted,
-        payMint: new PublicKey(article.mint),
-        price: { toNumber: () => article.price },
-        royaltyBps: article.royaltyBps,
-        transferable: false,
-      };
+      const { transaction: serializedTx } = await response.json();
 
-      const tx = await sdk.purchase(
-        publicKey,
-        articlePubkey,
-        new PublicKey(article.mint),
-        articleData,
-        referrer
-      );
+      // Deserialize the transaction
+      const txBuffer = Buffer.from(serializedTx, 'base64');
+      const transaction = Transaction.from(txBuffer);
 
-      const signature = await provider.sendAndConfirm(tx);
+      // Sign and send the transaction
+      const signature = await sendTransaction(transaction, connection);
+
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+
       console.log('Purchase successful! Signature:', signature);
-
       onSuccess();
     } catch (err: any) {
       console.error('Purchase failed:', err);
